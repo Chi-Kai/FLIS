@@ -41,7 +41,7 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
     clusters = []
     
     print('------cluster-------')
-    print(f'A-{A},clients-{clients_similarity},clusters-{clusters}')
+    print(f'A: {A},clients: {clients_similarity},clusters: {clusters}')
     print('------cluster-------')
 
     for idx1 in clients_idxs:
@@ -51,9 +51,8 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
             A1_A2 = A1_norm * A2_norm
             sim = ((A[idx1]*A[idx2]).sum() / A1_A2).item()
             clients_similarity[idx1].append(sim)
-            print('------cluster-------')
-            print(f'A1_norm-{A1_norm},A2_norm-{A2_norm},A1_A2-{A1_A2},sim-{sim},clients_similarity-{clients_similarity}')
-            print('------cluster-------')
+            print(f'idx1: {idx1}  idx2: {idx2}')
+            print(f'A1_norm: {A1_norm},A2_norm: {A2_norm},A1_A2: {A1_A2},sim: {sim},clients_similarity: {clients_similarity}')
             
     mat_sim = np.zeros([nclients,nclients])
     for i in range(nclients):
