@@ -33,7 +33,7 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
                 pred = output.data.max(1, keepdim=True)[1]  # get the index of the max log-probability
                 correct = pred.eq(target.data.view_as(pred)).long().cpu().sum()
 
-                clients_pred_per_label[idx].append(F.one_hot(pred.view(-1), num_classes=nclasses))
+                clients_pred_per_label[idx].append(F.one_hot(pred.view(-1), num_classes=nclasses)) # 
                 clients_correct_pred_per_label[idx][batch_idx] = correct.item()
 
     A = {idx: torch.stack(clients_pred_per_label[idx]).view(nsamples, nclasses) for idx in clients_idxs}
@@ -113,7 +113,15 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
             temp.append(copy.deepcopy(clients[idx].get_state_dict()))
             
         w_locals_clusters[i].extend(temp)
-    
+    print('cluster-----end')
+    print(f'cluster: {clusters}')
+    print(f'clusters_bm: {clusters_bm}')
+    print(f'w_locals_clusters: {w_locals_clusters}')
+    print(f'clients_correct_pred_per_label: {clients_correct_pred_per_label}')
+    print(f'clients_similarity: {clients_similarity}')
+    print(f'mat_sim: {mat_sim}')
+    print(f'A: {A}')
+    print('cluster-----end')
     return clusters, clusters_bm, w_locals_clusters, clients_correct_pred_per_label, clients_similarity, mat_sim, A
 
 
