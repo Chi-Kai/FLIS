@@ -32,7 +32,7 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
                 #test_loss += F.cross_entropy(output, target, reduction='sum').item()  # sum up batch loss
                 pred = output.data.max(1, keepdim=True)[1]  # get the index of the max log-probability
                 correct = pred.eq(target.data.view_as(pred)).long().cpu().sum()
-
+                # one_hot 对张量进行编码
                 clients_pred_per_label[idx].append(F.one_hot(pred.view(-1), num_classes=nclasses)) # 
                 clients_correct_pred_per_label[idx][batch_idx] = correct.item()
 
@@ -40,9 +40,9 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
     clients_similarity = {idx: [] for idx in clients_idxs}
     clusters = []
     
-    print('------cluster-------')
-    print(f'A: {A},clients: {clients_similarity},clusters: {clusters}')
-    print('------cluster-------')
+   # print('------cluster-------')
+   # print(f'A: {A},clients: {clients_similarity},clusters: {clusters}')
+   # print('------cluster-------')
 
     for idx1 in clients_idxs:
         for idx2 in clients_idxs:
@@ -51,10 +51,15 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
             A1_A2 = A1_norm * A2_norm
             sim = ((A[idx1]*A[idx2]).sum() / A1_A2).item()
             clients_similarity[idx1].append(sim)
-            print(f'idx1: {idx1}  idx2: {idx2}')
-            print(f'A1_norm: {A1_norm},A2_norm: {A2_norm},A1_A2: {A1_A2},sim: {sim},clients_similarity: {clients_similarity}')
+
+         #  print(f'idx1: {idx1}  idx2: {idx2}')
+        
+    
+    print(f'clients_similarity: {clients_similarity}')
             
     mat_sim = np.zeros([nclients,nclients])
+
+    # 提取出来相似度
     for i in range(nclients):
         mat_sim[i, :] = np.array(clients_similarity[clients_idxs[i]])
         
@@ -67,6 +72,7 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
         
         #print(f'temp: {temp}')
         #print(f'sorted_idx[1]: {sorted_idx[1]}, type: {type(sorted_idx[1])}')
+
         index = 0 
         flag = True 
         found_above_th = False
@@ -116,11 +122,9 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
     print('cluster-----end')
     print(f'cluster: {clusters}')
     print(f'clusters_bm: {clusters_bm}')
-    print(f'w_locals_clusters: {w_locals_clusters}')
     print(f'clients_correct_pred_per_label: {clients_correct_pred_per_label}')
     print(f'clients_similarity: {clients_similarity}')
     print(f'mat_sim: {mat_sim}')
-    print(f'A: {A}')
     print('cluster-----end')
     return clusters, clusters_bm, w_locals_clusters, clients_correct_pred_per_label, clients_similarity, mat_sim, A
 
@@ -169,7 +173,7 @@ def create_sim_logits(clients_idxs, clients, shared_data_loader, args, nclasses=
     sim_mat = np.zeros([nclients,nclients])
     for i in range(nclients):
         sim_mat[i, :] = np.array(clients_similarity[clients_idxs[i]])
-    
+    # 和上一个函数没差别?
     return clients_correct_pred_per_label, clients_similarity, sim_mat, A
 
 def form_clusters(sim_mat, clients_idxs, alpha=0.5):
@@ -213,83 +217,85 @@ def form_clusters(sim_mat, clients_idxs, alpha=0.5):
         
     return clusters
     
-# def create_sim_logits(clients_idxs, clients, shared_data_loader, args, alpha=5, nclasses=10, nsamples=2500):
-#     #clients_idxs = np.arange(10)
+ 
+def create_sim_logits_hc(clients_idxs, clients, shared_data_loader, args, alpha=5, nclasses=10, nsamples=2500):
+     #clients_idxs = np.arange(10)
     
-#     nclients = len(clients_idxs)
-#     #nclasses = 10
-#     #nsamples = 2500
+     nclients = len(clients_idxs)
+     #nclasses = 10
+     #nsamples = 2500
     
-#     clients_correct_pred_per_label = {idx: {i: 0 for i in range(nclasses)} for idx in clients_idxs}
-#     clients_pred_per_label = {idx: [] for idx in clients_idxs}
+     clients_correct_pred_per_label = {idx: {i: 0 for i in range(nclasses)} for idx in clients_idxs}
+     clients_pred_per_label = {idx: [] for idx in clients_idxs}
     
-#     with torch.no_grad():
-#         for batch_idx, (data, target) in enumerate(shared_data_loader):
-#             data, target = data.to(args.device), target.to(args.device)
-#             for idx in clients_idxs: 
-#                 #test_loss = 0
-#                 correct = 0
+     with torch.no_grad():
+         for batch_idx, (data, target) in enumerate(shared_data_loader):
+             data, target = data.to(args.device), target.to(args.device)
+             for idx in clients_idxs: 
+                 #test_loss = 0
+                 correct = 0
                 
-#                 net = copy.deepcopy(clients[idx].get_net())
-#                 net.to(args.device)
-#                 net.eval()
+                 net = copy.deepcopy(clients[idx].get_net())
+                 net.to(args.device)
+                 net.eval()
 
-#                 output = net(data)
-#                 #test_loss += F.cross_entropy(output, target, reduction='sum').item()  # sum up batch loss
-#                 pred = output.data.max(1, keepdim=True)[1]  # get the index of the max log-probability
-#                 correct = pred.eq(target.data.view_as(pred)).long().cpu().sum()
+                 output = net(data)
+                 #test_loss += F.cross_entropy(output, target, reduction='sum').item()  # sum up batch loss
+                 pred = output.data.max(1, keepdim=True)[1]  # get the index of the max log-probability
+                 correct = pred.eq(target.data.view_as(pred)).long().cpu().sum()
 
-#                 clients_pred_per_label[idx].append(F.one_hot(pred.view(-1), num_classes=nclasses))
-#                 clients_correct_pred_per_label[idx][batch_idx] = correct.item()
+                 # 
+                 clients_pred_per_label[idx].append(F.one_hot(pred.view(-1), num_classes=nclasses))
+                 clients_correct_pred_per_label[idx][batch_idx] = correct.item()
 
-#     A = {idx: torch.stack(clients_pred_per_label[idx]).view(nsamples, nclasses) for idx in clients_idxs}
-#     clients_similarity = {idx: [] for idx in clients_idxs}
-#     clusters = []
+     A = {idx: torch.stack(clients_pred_per_label[idx]).view(nsamples, nclasses) for idx in clients_idxs}
+     clients_similarity = {idx: [] for idx in clients_idxs}
+     clusters = []
     
-#     for idx1 in clients_idxs:
-#         for idx2 in clients_idxs:
-#             A1_norm = torch.norm(A[idx1].type(torch.cuda.FloatTensor), 'fro')
-#             A2_norm = torch.norm(A[idx2].type(torch.cuda.FloatTensor), 'fro')
-#             A1_A2 = A1_norm * A2_norm
-#             sim = ((A[idx1]*A[idx2]).sum() / A1_A2).item()
-#             clients_similarity[idx1].append(sim)
+     for idx1 in clients_idxs:
+         for idx2 in clients_idxs:
+             A1_norm = torch.norm(A[idx1].type(torch.cuda.FloatTensor), 'fro')
+             A2_norm = torch.norm(A[idx2].type(torch.cuda.FloatTensor), 'fro')
+             A1_A2 = A1_norm * A2_norm
+             sim = ((A[idx1]*A[idx2]).sum() / A1_A2).item()
+             clients_similarity[idx1].append(sim)
             
-#     sim_mat = np.zeros([nclients,nclients])
-#     for i in range(nclients):
-#         sim_mat[i, :] = np.array(clients_similarity[clients_idxs[i]])
+     sim_mat = np.zeros([nclients,nclients])
+     for i in range(nclients):
+         sim_mat[i, :] = np.array(clients_similarity[clients_idxs[i]])
+     # HC 操作  
+     num_clusters=alpha
+     Z = linkage(sim_mat, method = 'ward')
+     agg_clustering = AgglomerativeClustering(n_clusters = num_clusters, affinity = 'euclidean', linkage = 'ward')
+
+     labels = agg_clustering.fit_predict(sim_mat)    
+
+     clusters = []
+     for i in range(num_clusters):
+         clusters.append(np.where(labels==i)[0].tolist())
+
+     #print(f'clusters before merge: {clusters}')
+     clusters_bm = copy.deepcopy(clusters)
+     #clusters = merge_clusters(clusters)
+     #print(f'clusters after merge: {clusters}')
+    
+ #     count = 0
+ #     for el in clusters:
+ #         count += len(el)
         
-#     num_clusters=alpha
-#     Z = linkage(sim_mat, method = 'ward')
-#     agg_clustering = AgglomerativeClustering(n_clusters = num_clusters, affinity = 'euclidean', linkage = 'ward')
-
-#     labels = agg_clustering.fit_predict(sim_mat)    
-
-#     clusters = []
-#     for i in range(num_clusters):
-#         clusters.append(np.where(labels==i)[0].tolist())
-
-#     #print(f'clusters before merge: {clusters}')
-#     clusters_bm = copy.deepcopy(clusters)
-#     #clusters = merge_clusters(clusters)
-#     #print(f'clusters after merge: {clusters}')
+     #print(f'count: {count}') 
     
-# #     count = 0
-# #     for el in clusters:
-# #         count += len(el)
-        
-#     #print(f'count: {count}') 
+ #     assert count == nclients
     
-# #     assert count == nclients
-    
-#     w_locals_clusters = {i: [] for i in range(len(clusters))}
-#     for i in range(len(clusters)):
-#         temp = []
-#         for idx in clusters[i]:
-#             temp.append(copy.deepcopy(clients[idx].get_state_dict()))
+     w_locals_clusters = {i: [] for i in range(len(clusters))}
+     for i in range(len(clusters)):
+         temp = []
+         for idx in clusters[i]:
+             temp.append(copy.deepcopy(clients[idx].get_state_dict()))
             
-#         w_locals_clusters[i].extend(temp)
+         w_locals_clusters[i].extend(temp)
     
-#     return clusters, clusters_bm, w_locals_clusters, clients_correct_pred_per_label, clients_similarity, sim_mat, A
+     return clusters, clusters_bm, w_locals_clusters, clients_correct_pred_per_label, clients_similarity, sim_mat, A
 
 
 def merge_clusters(belist):
