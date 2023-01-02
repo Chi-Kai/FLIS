@@ -72,6 +72,7 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
         
         print(f'temp: {temp}')
         print(f'sorted_idx[1]: {sorted_idx[1]}, type: {type(sorted_idx[1])}')
+        print(f'sorted_sim[1]: {sorted_sim[1]}')
 
         index = 0 
         flag = True 
