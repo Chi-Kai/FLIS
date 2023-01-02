@@ -70,8 +70,8 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
         sorted_idx = temp[0]
         sorted_sim = temp[1]
         
-        #print(f'temp: {temp}')
-        #print(f'sorted_idx[1]: {sorted_idx[1]}, type: {type(sorted_idx[1])}')
+        print(f'temp: {temp}')
+        print(f'sorted_idx[1]: {sorted_idx[1]}, type: {type(sorted_idx[1])}')
 
         index = 0 
         flag = True 
@@ -79,12 +79,14 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
         cc = []
         cc.append(clients_idxs[i])
         while flag: 
+            # sim 达到一个阈值 0.96 且 不是自身
             if sorted_sim[index] >= 0.96:
                 if i != int(sorted_idx[index]): 
                     #clusters.append(tuple([clients_idxs[i], clients_idxs[int(sorted_idx[index])]]))
                     cc.append(clients_idxs[int(sorted_idx[index])])
                     found_above_th = True
                 index += 1
+            # 这个alpha 是 可以设置的超参数
             elif sorted_sim[index] >= alpha: 
                 #clusters.append(tuple([clients_idxs[i], clients_idxs[int(sorted_idx[index])]]))
                 cc.append(clients_idxs[int(sorted_idx[index])])
