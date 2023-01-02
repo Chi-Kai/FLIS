@@ -29,8 +29,10 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
                 net.eval()
 
                 output = net(data)
+                print(f'out: {output}')
                 #test_loss += F.cross_entropy(output, target, reduction='sum').item()  # sum up batch loss
                 pred = output.data.max(1, keepdim=True)[1]  # get the index of the max log-probability
+                print(f'pred: {pred}')
                 correct = pred.eq(target.data.view_as(pred)).long().cpu().sum()
                 # one_hot 对张量进行编码
                 clients_pred_per_label[idx].append(F.one_hot(pred.view(-1), num_classes=nclasses)) # 
