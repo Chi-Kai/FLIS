@@ -17,6 +17,7 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
     clients_correct_pred_per_label = {idx: {i: 0 for i in range(nclasses)} for idx in clients_idxs}
     clients_pred_per_label = {idx: [] for idx in clients_idxs}
     
+    # Bk
     with torch.no_grad():
         for batch_idx, (data, target) in enumerate(shared_data_loader):
             data, target = data.to(args.device), target.to(args.device)
@@ -31,10 +32,12 @@ def cluster_logits(clients_idxs, clients, shared_data_loader, args, alpha = 0.5,
                 output = net(data)
                 print(f'out: {output}')
                 #test_loss += F.cross_entropy(output, target, reduction='sum').item()  # sum up batch loss
-                pred = output.data.max(1, keepdim=True)[1]  # get the index of the max log-probability
+                # output 是训练后模型在server数据集上的二维向量
+                # pred 是每行向量最大值的index
+                pred = output.data.max(1, keepdim=True)[1]  # get the index of the max log-probability 
                 print(f'pred: {pred}')
                 correct = pred.eq(target.data.view_as(pred)).long().cpu().sum()
-                # one_hot 对张量进行编码
+                # one_hot 对张量进行编码,将最大位置标记为1，其他为0
                 clients_pred_per_label[idx].append(F.one_hot(pred.view(-1), num_classes=nclasses)) # 
                 clients_correct_pred_per_label[idx][batch_idx] = correct.item()
 
