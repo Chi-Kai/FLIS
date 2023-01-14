@@ -16,7 +16,7 @@ python ../main_FLIS_DC.py --trial=1 \
 --dataset=cifar10 \
 --datadir='../../data/' \
 --savedir='../save_results/fedis_dc/' \
---partition='noniid-#label2' \
+--partition='noniid-#label3' \
 --alg='flis_dc' \
 --beta=0.5 \
 --local_view \
